@@ -1,0 +1,15 @@
+From: "HR Department" <hr-update@company-services.test>
+To: employee@company.com
+Subject: Update Required: Employee Benefits Portal
+Date: Mon, 11 Aug 2026 11:20:00 +0000
+Reply-To: hr-benefits@external-relay-host.com
+Return-Path: <bounce@external-relay-host.com>
+Authentication-Results: mx.company.com; spf=softfail; dkim=none; dmarc=fail
+
+Dear Employee,
+
+Please review the updated 2026 employee benefits guide.
+You can review the updated policy document here:
+http://bit.ly/3xX89bQ
+
+If you have questions, please contact HR.

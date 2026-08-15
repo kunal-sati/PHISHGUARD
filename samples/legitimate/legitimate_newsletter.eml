@@ -1,0 +1,21 @@
+From: "Tech Weekly Newsletter" <newsletter@example.com>
+To: reader@company.com
+Subject: Tech Digest: Latest Trends in AI and Cybersecurity
+Date: Mon, 11 Aug 2026 08:30:00 +0000
+Reply-To: newsletter@example.com
+Return-Path: <bounce@example.com>
+Authentication-Results: mx.company.com; spf=pass; dkim=pass; dmarc=pass
+
+Welcome to this week's Tech Digest!
+
+In this issue:
+1. Advances in Explainable Threat Detection
+2. Best practices for Zero Trust Architecture
+
+Read the full articles on our website:
+<a href="https://example.com/digest/issue-42">https://example.com/digest/issue-42</a>
+
+To unsubscribe, click <a href="https://example.com/unsubscribe">here</a>.
+
+Best regards,
+The Tech Digest Team

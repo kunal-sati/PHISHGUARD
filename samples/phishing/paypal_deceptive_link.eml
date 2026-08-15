@@ -1,0 +1,20 @@
+From: "PayPal Account Service" <service@paypa1-security-notice.test>
+To: customer@example.com
+Subject: Notice: Unauthorized Activity Detected on Your Account
+Date: Mon, 11 Aug 2026 14:15:00 +0000
+Reply-To: support@evil-phishing-host.xyz
+Return-Path: <bounce@evil-phishing-host.xyz>
+Authentication-Results: mx.example.com; spf=fail; dmarc=fail
+
+Hello PayPal Member,
+
+We detected an unusual login attempt to your PayPal account from an unrecognized IP address.
+For your safety, we have limited your account access.
+
+Immediate action required: Confirm your identity and billing information by visiting:
+<a href="http://login-paypal-verify.evil-phishing-host.xyz/auth">https://www.paypal.com/signin</a>
+
+If you do not verify within 24 hours, your account will be permanently closed.
+
+Sincerely,
+PayPal Risk Operations
