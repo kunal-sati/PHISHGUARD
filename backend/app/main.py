@@ -6,7 +6,10 @@ from app.api import email_routes
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    description="Lightweight Phishing Email Detection and Security Analysis System API"
+    description="Lightweight Phishing Email Detection and Security Analysis System API",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json"
 )
 
 # CORS Middleware (allows React frontend local communication)
