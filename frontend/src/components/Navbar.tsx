@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Shield, Menu, X } from 'lucide-react';
 
 interface NavbarProps {
   activeTab: string;
@@ -6,33 +7,83 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const navItems = [
     { id: 'dashboard', label: 'Home' },
     { id: 'analyze', label: 'Analyze Email' },
     { id: 'about', label: 'About' },
   ];
 
+  const handleNavClick = (id: string) => {
+    setActiveTab(id);
+    setMobileMenuOpen(false);
+  };
+
   return (
-    <nav className="fixed top-0 w-full z-50 bg-[#0e1416]/80 backdrop-blur-xl border-b border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] flex justify-between items-center px-4 md:px-8 h-16">
-      <div className="flex items-center gap-8">
-        <div 
-          className="font-mono text-xl md:text-2xl font-extrabold text-[#4cd7f6] drop-shadow-[0_0_8px_rgba(6,182,212,0.5)] tracking-wider cursor-pointer select-none"
-          onClick={() => setActiveTab('dashboard')}
+    <header className="bg-white border-b border-[#E3E5DF] sticky top-0 z-40">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-15 flex items-center justify-between">
+        {/* Brand Lockup */}
+        <button
+          onClick={() => handleNavClick('dashboard')}
+          className="flex items-center gap-2 text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#456B55] rounded"
         >
-          PHISHGUARD
-        </div>
-        
-        <div className="hidden md:flex gap-4">
+          <div className="w-7 h-7 rounded bg-[#EDF2EE] border border-[#D2D5CD] flex items-center justify-center text-[#456B55]">
+            <Shield className="w-4 h-4" strokeWidth={2} />
+          </div>
+          <span className="text-base font-semibold tracking-tight text-[#242824]">
+            PhishGuard
+          </span>
+          <span className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-[#F0F2ED] text-[#737873] border border-[#E3E5DF] ml-1">
+            v1.0
+          </span>
+        </button>
+
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center gap-7">
           {navItems.map((item) => {
             const isActive = activeTab === item.id;
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`font-mono text-xs md:text-sm font-bold uppercase tracking-wider px-3 py-1.5 rounded transition-all cursor-pointer ${
+                onClick={() => handleNavClick(item.id)}
+                className={`text-sm py-1 font-medium transition-colors cursor-pointer border-b-2 ${
                   isActive
-                    ? 'text-[#4cd7f6] border-b-2 border-[#4cd7f6] bg-white/5'
-                    : 'text-slate-400 hover:text-[#4cd7f6] hover:bg-white/5'
+                    ? 'text-[#456B55] border-[#456B55] font-semibold'
+                    : 'text-[#737873] border-transparent hover:text-[#242824]'
+                }`}
+              >
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Mobile Menu Button */}
+        <button
+          type="button"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="md:hidden p-2 rounded text-[#737873] hover:text-[#242824] hover:bg-[#F0F2ED] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#456B55]"
+          aria-label="Toggle navigation menu"
+          aria-expanded={mobileMenuOpen}
+        >
+          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
+      </div>
+
+      {/* Mobile Dropdown Menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-[#E3E5DF] bg-white px-4 py-3 space-y-1">
+          {navItems.map((item) => {
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleNavClick(item.id)}
+                className={`w-full text-left px-3 py-2 text-sm font-medium rounded transition-colors ${
+                  isActive
+                    ? 'text-[#456B55] bg-[#EDF2EE] font-semibold'
+                    : 'text-[#737873] hover:text-[#242824] hover:bg-[#F7F7F4]'
                 }`}
               >
                 {item.label}
@@ -40,26 +91,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
             );
           })}
         </div>
-      </div>
-
-
-      {/* Mobile nav buttons */}
-      <div className="md:hidden flex gap-2">
-        {navItems.map((item) => {
-          const isActive = activeTab === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`font-mono text-[11px] uppercase px-2 py-1 rounded ${
-                isActive ? 'text-[#4cd7f6] bg-slate-800' : 'text-slate-400'
-              }`}
-            >
-              {item.label}
-            </button>
-          );
-        })}
-      </div>
-    </nav>
+      )}
+    </header>
   );
 };

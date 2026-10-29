@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { UploadCloud, FileText, X, RotateCcw, Loader2 } from 'lucide-react';
 import { api } from '../services/api';
 import type { AnalysisResponse } from '../types';
 
@@ -8,9 +9,11 @@ interface AnalyzePageProps {
 
 const SAMPLE_EMAILS = [
   {
-    name: 'Legitimate_Newsletter.eml',
-    type: 'Legitimate',
-    badgeClass: 'bg-emerald-950 text-emerald-400 border-emerald-800',
+    name: 'Legitimate Newsletter',
+    filename: 'Legitimate_Newsletter.eml',
+    type: 'Low Risk',
+    badgeClass: 'status-low',
+    description: 'Corporate newsletter passing SPF, DKIM, and DMARC alignment with authentic domains.',
     content: `From: "Tech Weekly Newsletter" <newsletter@example.com>
 To: reader@company.com
 Subject: Weekly Technology Digest
@@ -28,9 +31,11 @@ In this issue:
 Read full articles: https://example.com/digest/issue-42`
   },
   {
-    name: 'Suspicious_Notice.eml',
-    type: 'Suspicious',
-    badgeClass: 'bg-amber-950 text-amber-400 border-amber-800',
+    name: 'Suspicious Maintenance Notice',
+    filename: 'Suspicious_Notice.eml',
+    type: 'Medium Risk',
+    badgeClass: 'status-medium',
+    description: 'Server maintenance notice failing SPF authentication with a shortened redirect URL.',
     content: `From: "System Administrator" <security@example.test>
 To: user@company.com
 Subject: Action Required: Maintenance Notice
@@ -46,9 +51,11 @@ We are performing routine server maintenance. Please verify your portal settings
 Access portal via shortener: http://bit.ly/3sampleLink`
   },
   {
-    name: 'Phishing_Credential.eml',
-    type: 'Phishing',
-    badgeClass: 'bg-rose-950 text-rose-400 border-rose-800',
+    name: 'Urgent Credential Harvest',
+    filename: 'Phishing_Credential.eml',
+    type: 'High Risk',
+    badgeClass: 'status-high',
+    description: 'Spoofed security notification with failed authentication, raw IP address, and deceptive anchor text.',
     content: `From: "Account Security Operations" <no-reply@example-phishing.test>
 To: user@company.com
 Subject: URGENT: Password Verification Required
@@ -92,6 +99,15 @@ export const AnalyzePage: React.FC<AnalyzePageProps> = ({ onAnalysisComplete }) 
     }
   };
 
+  const handleClear = () => {
+    if (inputMode === 'paste') {
+      setRawEmail('');
+    } else {
+      setUploadedFile(null);
+    }
+    setError(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -118,174 +134,202 @@ export const AnalyzePage: React.FC<AnalyzePageProps> = ({ onAnalysisComplete }) 
     }
   };
 
+  const isSubmitDisabled = loading || (inputMode === 'paste' ? !rawEmail.trim() : !uploadedFile);
+
   return (
-    <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full pt-4">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-        <div>
-          <h1 className="font-mono text-3xl font-bold text-white tracking-tight mb-1">Inspect &amp; Analyze Email</h1>
-          <p className="text-sm text-slate-400">Paste raw email headers and body or upload an .eml file for immediate threat extraction and analysis.</p>
-        </div>
-        <div className="flex items-center gap-2 bg-[#06b6d4]/10 border border-[#06b6d4]/30 px-3.5 py-1.5 rounded-full">
-          <div className="w-2 h-2 rounded-full bg-[#06b6d4] pulse-dot"></div>
-          <span className="font-mono text-xs text-[#06b6d4] uppercase font-semibold">Email Threat Inspection Engine</span>
-        </div>
+    <div className="space-y-8 max-w-4xl mx-auto">
+      {/* Header section */}
+      <div className="pb-2 border-b border-[#E3E5DF]">
+        <h1 className="text-2xl font-semibold tracking-tight text-[#242824]">
+          Analyze an Email
+        </h1>
+        <p className="text-sm text-[#737873] mt-1 max-w-2xl">
+          Paste an email or upload an .eml file to inspect its headers, authentication results, links, and potential phishing indicators.
+        </p>
       </div>
 
-      {/* Main Layout Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-        {/* Left Column: Form & Action (8 cols) */}
-        <div className="xl:col-span-8 flex flex-col gap-6">
-          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-            {/* Form Card */}
-            <div className="soc-card rounded-xl overflow-hidden flex flex-col h-[520px]">
-              {/* Tabs Header */}
-              <div className="flex border-b border-white/10 bg-slate-900/50">
-                <button
-                  type="button"
-                  onClick={() => setInputMode('paste')}
-                  className={`flex-1 py-3.5 px-6 font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border-b-2 transition-all cursor-pointer ${
-                    inputMode === 'paste'
-                      ? 'text-[#4cd7f6] border-[#4cd7f6] bg-[#4cd7f6]/5'
-                      : 'text-slate-400 border-transparent hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-base">content_paste</span>
-                  <span>Paste Email Content</span>
-                </button>
+      {/* Main Input Form */}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="pg-panel p-5 space-y-4">
+          {/* Segmented Control */}
+          <div className="flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-[#E3E5DF]">
+            <div className="bg-[#F0F2ED] p-1 rounded-md inline-flex border border-[#E3E5DF]">
+              <button
+                type="button"
+                onClick={() => { setInputMode('paste'); setError(null); }}
+                className={`text-xs px-3.5 py-1.5 rounded font-medium transition-colors cursor-pointer ${
+                  inputMode === 'paste'
+                    ? 'bg-white text-[#242824] shadow-xs'
+                    : 'text-[#737873] hover:text-[#242824]'
+                }`}
+              >
+                Paste Email Content
+              </button>
+              <button
+                type="button"
+                onClick={() => { setInputMode('upload'); setError(null); }}
+                className={`text-xs px-3.5 py-1.5 rounded font-medium transition-colors cursor-pointer ${
+                  inputMode === 'upload'
+                    ? 'bg-white text-[#242824] shadow-xs'
+                    : 'text-[#737873] hover:text-[#242824]'
+                }`}
+              >
+                Upload .eml File
+              </button>
+            </div>
 
-                <button
-                  type="button"
-                  onClick={() => setInputMode('upload')}
-                  className={`flex-1 py-3.5 px-6 font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border-b-2 transition-all cursor-pointer ${
-                    inputMode === 'upload'
-                      ? 'text-[#4cd7f6] border-[#4cd7f6] bg-[#4cd7f6]/5'
-                      : 'text-slate-400 border-transparent hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-base">upload_file</span>
-                  <span>Upload .eml File</span>
-                </button>
-              </div>
+            {(rawEmail || uploadedFile) && (
+              <button
+                type="button"
+                onClick={handleClear}
+                className="text-xs text-[#737873] hover:text-[#242824] inline-flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Clear</span>
+              </button>
+            )}
+          </div>
 
-              {/* Tab Content: Paste */}
-              {inputMode === 'paste' ? (
-                <div className="flex-1 p-6 flex flex-col gap-2">
-                  <div className="flex justify-between items-center mb-1">
-                    <label className="font-mono text-[11px] text-slate-400 uppercase tracking-wider">Raw Email Source</label>
-                    <button
-                      type="button"
-                      onClick={() => setRawEmail('')}
-                      className="font-mono text-xs text-[#4cd7f6] hover:text-cyan-300 flex items-center gap-1 transition-colors cursor-pointer"
-                    >
-                      <span className="material-symbols-outlined text-sm">content_copy</span> Clear
-                    </button>
-                  </div>
-                  <textarea
-                    value={rawEmail}
-                    onChange={(e) => setRawEmail(e.target.value)}
-                    className="flex-1 w-full bg-slate-950 border border-white/10 rounded-lg p-4 font-mono text-xs text-slate-200 focus:border-[#4cd7f6] focus:ring-1 focus:ring-[#4cd7f6] focus:outline-none resize-none"
-                    placeholder={`From: "Security Notice" <sender@example.com>\nTo: victim@domain.com\nSubject: URGENT: Password Verification Required\n\nPaste full email headers and body content here...`}
+          {/* Tab 1: Paste Mode */}
+          {inputMode === 'paste' ? (
+            <div className="space-y-2">
+              <label htmlFor="raw-email-input" className="text-xs font-medium text-[#737873] block">
+                RFC 822 Raw Email Source
+              </label>
+              <textarea
+                id="raw-email-input"
+                value={rawEmail}
+                onChange={(e) => { setRawEmail(e.target.value); setError(null); }}
+                className="w-full h-72 bg-white border border-[#E3E5DF] rounded-md p-3.5 font-mono text-xs text-[#242824] placeholder:text-[#9CA3AF] focus:border-[#456B55] focus:ring-1 focus:ring-[#456B55] focus:outline-none resize-y leading-relaxed"
+                placeholder={`From: "Security Notice" <sender@example.com>\nTo: recipient@company.com\nSubject: Account Verification Required\nAuthentication-Results: mx.company.com; spf=pass; dkim=pass\n\nPaste full email headers and body content here...`}
+              />
+            </div>
+          ) : (
+            /* Tab 2: Upload Mode */
+            <div className="space-y-2">
+              <span className="text-xs font-medium text-[#737873] block">
+                Upload RFC 822 Email File
+              </span>
+
+              {!uploadedFile ? (
+                <label className="border border-dashed border-[#D2D5CD] bg-[#F7F7F4] hover:bg-white rounded-md p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-colors block">
+                  <input
+                    type="file"
+                    accept=".eml,.txt"
+                    onChange={handleFileChange}
+                    className="sr-only"
                   />
-                </div>
-              ) : (
-                /* Tab Content: Upload */
-                <div className="flex-1 p-6">
-                  <div className="h-full border-2 border-dashed border-slate-700 rounded-lg flex flex-col items-center justify-center bg-slate-950/40 hover:bg-slate-950/80 transition-colors hover:border-[#4cd7f6]/50 cursor-pointer group relative">
-                    <input
-                      type="file"
-                      accept=".eml,.txt"
-                      onChange={handleFileChange}
-                      className="absolute inset-0 opacity-0 cursor-pointer"
-                    />
-                    <div className="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                      <span className="material-symbols-outlined text-3xl text-slate-400 group-hover:text-[#4cd7f6]">cloud_upload</span>
-                    </div>
-                    <h3 className="font-mono text-sm font-bold text-white mb-1">
-                      {uploadedFile ? uploadedFile.name : 'Drag & Drop .eml file here'}
-                    </h3>
-                    <p className="text-xs text-slate-400 mb-4 text-center">
-                      {uploadedFile ? `Size: ${(uploadedFile.size / 1024).toFixed(1)} KB` : 'Supports standard RFC 822 email format. Max file size: 10MB.'}
-                    </p>
-                    <span className="px-4 py-2 bg-slate-800 border border-white/10 rounded font-mono text-xs uppercase text-white group-hover:bg-slate-700">
-                      {uploadedFile ? 'Change File' : 'Browse Files'}
-                    </span>
+                  <div className="w-10 h-10 rounded-full bg-[#EDF2EE] text-[#456B55] flex items-center justify-center mb-3">
+                    <UploadCloud className="w-5 h-5" />
                   </div>
+                  <div className="text-sm font-medium text-[#242824]">
+                    Click to select or drag and drop an .eml file
+                  </div>
+                  <div className="text-xs text-[#737873] mt-1">
+                    Accepts standard RFC 822 (.eml or .txt) files up to 10 MB
+                  </div>
+                </label>
+              ) : (
+                <div className="p-4 bg-[#F0F2ED] border border-[#E3E5DF] rounded-md flex items-center justify-between">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded bg-white border border-[#E3E5DF] text-[#456B55] flex items-center justify-center shrink-0">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-[#242824] truncate">
+                        {uploadedFile.name}
+                      </div>
+                      <div className="text-xs text-[#737873]">
+                        {(uploadedFile.size / 1024).toFixed(1)} KB
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setUploadedFile(null)}
+                    className="text-xs text-[#737873] hover:text-[#991B1B] p-1.5 rounded transition-colors cursor-pointer"
+                    title="Remove selected file"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
               )}
             </div>
+          )}
 
-            {/* Error Alert */}
-            {error && (
-              <div className="p-4 bg-rose-950/80 border border-rose-800 rounded-lg text-rose-300 text-xs font-mono">
-                🛑 {error}
-              </div>
-            )}
+          {/* Validation / Error Message */}
+          {error && (
+            <div className="p-3 bg-[#FEEBEB] border border-[#FCA5A5] rounded-md text-xs text-[#991B1B] font-medium">
+              {error}
+            </div>
+          )}
 
-            {/* Action Button */}
+          {/* Primary Action Button */}
+          <div className="pt-2">
             <button
               type="submit"
-              disabled={loading}
-              className="w-full py-4 rounded-xl glowing-button font-mono text-base uppercase tracking-widest font-bold flex items-center justify-center gap-3 cursor-pointer"
+              disabled={isSubmitDisabled}
+              className="pg-btn-primary w-full py-2.5 text-sm"
             >
               {loading ? (
                 <>
-                  <span className="material-symbols-outlined animate-spin">progress_activity</span>
-                  <span>Executing Inspection Engine...</span>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Analyzing Email...</span>
                 </>
               ) : (
-                <>
-                  <span className="material-symbols-outlined">radar</span>
-                  <span>Execute Email Analysis</span>
-                </>
+                <span>Analyze Email</span>
               )}
             </button>
-          </form>
+          </div>
+        </div>
+      </form>
+
+      {/* Try a Sample Email section */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-[#242824]">Try a Sample Email</h2>
+          <span className="text-xs text-[#737873]">Loads sample content into input without automatic submission</span>
         </div>
 
-        {/* Right Column: Presets & Info (4 cols) */}
-        <div className="xl:col-span-4 flex flex-col gap-6">
-          {/* Presets Module */}
-          <div className="soc-card rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-white/10">
-              <span className="material-symbols-outlined text-[#4cd7f6]">science</span>
-              <h2 className="font-mono text-base font-bold text-white">Test Payloads</h2>
-            </div>
-            <p className="text-xs text-slate-400 mb-4">Click any pre-configured email sample below to test PhishGuard's detection rules.</p>
-            <div className="flex flex-col gap-3">
-              {SAMPLE_EMAILS.map((sample, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => handleSampleClick(sample.content)}
-                  className="w-full flex items-center justify-between p-3 rounded-lg bg-slate-950/80 hover:bg-slate-800/80 border border-white/5 hover:border-[#4cd7f6]/40 transition-all text-left cursor-pointer group"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className={`w-2 h-2 rounded-full ${
-                      sample.type === 'Phishing' ? 'bg-rose-500' :
-                      sample.type === 'Suspicious' ? 'bg-amber-500' : 'bg-emerald-500'
-                    }`}></span>
-                    <span className="font-mono text-xs text-slate-200 group-hover:text-[#4cd7f6] transition-colors">{sample.name}</span>
-                  </div>
-                  <span className="material-symbols-outlined text-sm text-slate-400 group-hover:text-[#4cd7f6]">download</span>
-                </button>
-              ))}
-            </div>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {SAMPLE_EMAILS.map((sample, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => handleSampleClick(sample.content)}
+              className="pg-panel p-4 text-left hover:border-[#456B55] transition-colors cursor-pointer flex flex-col justify-between space-y-3 group"
+            >
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-semibold text-[#242824] group-hover:text-[#456B55] transition-colors">
+                    {sample.name}
+                  </span>
+                  <span className={`status-pill ${sample.badgeClass}`}>
+                    {sample.type}
+                  </span>
+                </div>
+                <p className="text-xs text-[#737873] mt-2 leading-relaxed">
+                  {sample.description}
+                </p>
+              </div>
 
-          {/* Info Module */}
-          <div className="soc-card rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="material-symbols-outlined text-[#4cd7f6]">info</span>
-              <h2 className="font-mono text-base font-bold text-white">Analysis Capabilities</h2>
-            </div>
-            <ul className="text-xs text-slate-300 space-y-2 pl-5 list-disc mt-3 leading-relaxed">
-              <li>Header forgery &amp; Reply-To/Return-Path domain mismatch.</li>
-              <li>Live SPF / DKIM / DMARC authentication checks.</li>
-              <li>URL extraction, deceptive anchor text, &amp; shortener detection.</li>
-              <li>Pattern scanning for credentials &amp; urgency coercion.</li>
-            </ul>
-          </div>
+              <div className="text-[11px] font-mono text-[#456B55] font-medium pt-2 border-t border-[#E3E5DF]">
+                Load sample →
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Explanatory Technical Notes */}
+      <div className="pg-panel p-4 bg-[#F0F2ED]/60 text-xs text-[#737873] space-y-2">
+        <div className="font-semibold text-[#242824]">Analysis Scope</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 leading-relaxed">
+          <div>• Extracts sender domains, Return-Path, and Reply-To for forgery checks.</div>
+          <div>• Queries live DNS for SPF (`v=spf1`) and DMARC (`_dmarc`) policy records.</div>
+          <div>• Parses all hyperlinks to identify raw IP addresses and deceptive display anchors.</div>
+          <div>• Scans message body for credential harvesting prompts and coercive urgency cues.</div>
         </div>
       </div>
     </div>

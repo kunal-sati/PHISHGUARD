@@ -23,13 +23,10 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0e1416] text-[#dee3e6] flex flex-col font-sans relative">
-      {/* Decorative Background Glow */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#4cd7f6]/5 blur-[120px] rounded-full pointer-events-none -z-10"></div>
-
+    <div className="min-h-screen bg-[#F7F7F4] text-[#242824] flex flex-col font-sans">
       <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-12">
+      <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'dashboard' && (
           <Dashboard
             onStartAnalysis={() => setActiveTab('analyze')}
@@ -52,7 +49,18 @@ export function App() {
         {activeTab === 'about' && <AboutPage />}
       </main>
 
-
+      <footer className="border-t border-[#E3E5DF] bg-white py-6 mt-auto">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#737873]">
+          <div>PhishGuard — Lightweight Phishing Email Detection &amp; Security Analysis</div>
+          <div className="flex items-center gap-3">
+            <span>RFC 822 Forensics</span>
+            <span className="text-[#D2D5CD]">/</span>
+            <span>SPF &amp; DMARC DNS</span>
+            <span className="text-[#D2D5CD]">/</span>
+            <span>Heuristic Engine</span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

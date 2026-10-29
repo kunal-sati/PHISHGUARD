@@ -1,4 +1,5 @@
 import React from 'react';
+import { ArrowLeft, CheckCircle2, XCircle, HelpCircle } from 'lucide-react';
 import type { AnalysisResponse, URLAnalysisItem, RiskIndicatorItem } from '../types';
 
 interface AnalysisResultPageProps {
@@ -7,262 +8,337 @@ interface AnalysisResultPageProps {
 }
 
 export const AnalysisResultPage: React.FC<AnalysisResultPageProps> = ({ result, onBack }) => {
-  const isHighRisk = result.risk_score >= 61;
-  const isMediumRisk = result.risk_score >= 31 && result.risk_score < 61;
 
+  const getScoreColor = (score: number) => {
+    if (score <= 30) return 'text-[#1E5A2A]';
+    if (score <= 60) return 'text-[#825B00]';
+    return 'text-[#991B1B]';
+  };
 
-  const getAuthBadge = (status: string) => {
-    if (status === 'PASS') {
+  const getProgressBarColor = (score: number) => {
+    if (score <= 30) return 'bg-[#2E7D32]';
+    if (score <= 60) return 'bg-[#D97706]';
+    return 'bg-[#DC2626]';
+  };
+
+  const getStatusBadge = (classification: string, level: string) => {
+    const label = classification.replace(/_/g, ' ');
+    switch (level) {
+      case 'LOW':
+        return <span className="status-pill status-low">{label}</span>;
+      case 'MEDIUM':
+        return <span className="status-pill status-medium">{label}</span>;
+      case 'HIGH':
+        return <span className="status-pill status-high">{label}</span>;
+      case 'CRITICAL':
+        return <span className="status-pill status-critical">{label}</span>;
+      default:
+        return <span className="status-pill bg-[#F0F2ED] text-[#737873] border border-[#E3E5DF]">{label}</span>;
+    }
+  };
+
+  const getAuthStatusDisplay = (status: string) => {
+    const s = (status || 'UNKNOWN').toUpperCase();
+    if (s === 'PASS') {
       return (
-        <div className="flex items-center gap-1 text-emerald-400 font-mono text-xs font-bold uppercase">
-          <span className="material-symbols-outlined text-sm">check_circle</span>
+        <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#1E5A2A] bg-[#EBF5ED] px-2 py-0.5 rounded border border-[#C8E6C9]">
+          <CheckCircle2 className="w-3.5 h-3.5" />
           <span>Pass</span>
-        </div>
+        </span>
       );
     }
-    if (status === 'FAIL') {
+    if (s === 'FAIL' || s === 'SOFTFAIL') {
       return (
-        <div className="flex items-center gap-1 text-rose-400 font-mono text-xs font-bold uppercase">
-          <span className="material-symbols-outlined text-sm">cancel</span>
+        <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#991B1B] bg-[#FEEBEB] px-2 py-0.5 rounded border border-[#FCA5A5]">
+          <XCircle className="w-3.5 h-3.5" />
           <span>Fail</span>
-        </div>
+        </span>
       );
     }
     return (
-      <div className="flex items-center gap-1 text-slate-400 font-mono text-xs font-bold uppercase">
-        <span className="material-symbols-outlined text-sm">help</span>
-        <span>{status}</span>
-      </div>
+      <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#737873] bg-[#F0F2ED] px-2 py-0.5 rounded border border-[#E3E5DF]">
+        <HelpCircle className="w-3.5 h-3.5" />
+        <span>{status || 'Unknown'}</span>
+      </span>
     );
   };
 
   return (
-    <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full pt-2 pb-12">
-      {/* Contextual Top Header */}
-      <div className="flex justify-between items-center pb-4 border-b border-white/10">
+    <div className="space-y-6 max-w-5xl mx-auto">
+      {/* Navigation Breadcrumb & Metadata Bar */}
+      <div className="flex items-center justify-between pb-3 border-b border-[#E3E5DF] flex-wrap gap-2">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-slate-400 hover:text-[#4cd7f6] transition-colors cursor-pointer group font-mono text-xs uppercase"
+          className="text-xs font-medium text-[#737873] hover:text-[#242824] inline-flex items-center gap-1.5 transition-colors cursor-pointer"
         >
-          <span className="material-symbols-outlined text-base group-hover:-translate-x-1 transition-transform">arrow_back</span>
-          <span>Back to Analysis Input</span>
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back to Analyze Email</span>
         </button>
 
-        <div className="flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded border border-white/10">
-          <span className="material-symbols-outlined text-[#4cd7f6] text-sm">qr_code_scanner</span>
-          <span className="font-mono text-xs text-[#4cd7f6] tracking-wide">ID: {result.analysis_id.slice(0, 8).toUpperCase()}</span>
+        <div className="flex items-center gap-3 text-xs text-[#737873] font-mono">
+          <span>ID: {result.analysis_id.slice(0, 8).toUpperCase()}</span>
+          <span className="text-[#D2D5CD]">•</span>
+          <span>{new Date(result.created_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</span>
         </div>
       </div>
 
-      {/* Top Section: Risk Gauge & Verdict */}
-      <section className={`${isHighRisk ? 'soc-card-error' : 'soc-card'} rounded-xl p-6 md:p-8 flex flex-col md:flex-row items-center gap-8 relative overflow-hidden`}>
-        {/* Circle Gauge */}
-        <div className="flex flex-col items-center justify-center min-w-[140px]">
-          <div className="relative flex items-center justify-center">
-            <svg className="w-28 h-28 transform -rotate-90">
-              <circle cx="56" cy="56" fill="none" r="48" stroke="rgba(255,255,255,0.1)" strokeWidth="8"></circle>
-              <circle
-                className="transition-all duration-1000 ease-out"
-                cx="56"
-                cy="56"
-                fill="none"
-                r="48"
-                stroke={isHighRisk ? '#f43f5e' : isMediumRisk ? '#f59e0b' : '#10b981'}
-                strokeDasharray="301.5"
-                strokeDashoffset={301.5 - (301.5 * result.risk_score) / 100}
-                strokeWidth="8"
-              ></circle>
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center flex-col">
-              <span className={`font-mono text-3xl font-bold ${isHighRisk ? 'text-rose-400' : isMediumRisk ? 'text-amber-400' : 'text-emerald-400'}`}>
+      {/* Forensic Report Overview Card */}
+      <div className="pg-panel p-6 space-y-4">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+          <div className="space-y-1">
+            <div className="text-xs text-[#737873] font-medium uppercase tracking-wider">
+              Investigation Verdict
+            </div>
+            <h1 className="text-xl font-semibold text-[#242824]">
+              {result.email.subject || '(No Subject Line)'}
+            </h1>
+            <div className="text-xs text-[#737873] font-mono">
+              Evaluated sender: {result.email.source_domain || result.email.sender || 'Unknown domain'}
+            </div>
+          </div>
+
+          <div className="flex flex-col items-start md:items-end gap-2 shrink-0">
+            {getStatusBadge(result.classification, result.risk_level)}
+            <div className="flex items-baseline gap-1">
+              <span className={`text-3xl font-semibold font-mono ${getScoreColor(result.risk_score)}`}>
                 {result.risk_score}
               </span>
-              <span className="font-mono text-[9px] uppercase text-slate-400 tracking-wider">Score / 100</span>
+              <span className="text-xs text-[#737873] font-mono font-medium">/ 100</span>
+            </div>
+            {/* Restrained horizontal meter */}
+            <div className="w-36 h-1.5 bg-[#F0F2ED] rounded overflow-hidden border border-[#E3E5DF]">
+              <div
+                style={{ width: `${Math.min(100, Math.max(0, result.risk_score))}%` }}
+                className={`h-full ${getProgressBarColor(result.risk_score)}`}
+              />
             </div>
           </div>
         </div>
 
-        {/* Verdict & Explanation */}
-        <div className="flex flex-col gap-2 flex-1 z-10 text-center md:text-left">
-          <div className="flex items-center justify-center md:justify-start gap-3">
-            <span className={`pulse-dot w-2.5 h-2.5 rounded-full ${isHighRisk ? 'bg-rose-500' : isMediumRisk ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
-            <h1 className={`font-mono text-2xl font-bold tracking-wider uppercase ${isHighRisk ? 'text-rose-400' : isMediumRisk ? 'text-amber-400' : 'text-emerald-400'}`}>
-              {result.classification.replace(/_/g, ' ')}
-            </h1>
-          </div>
-          <p className="text-xs md:text-sm text-slate-300 leading-relaxed max-w-2xl">
-            {result.explanation}
-          </p>
+        <div className="p-3.5 rounded bg-[#F7F7F4] border border-[#E3E5DF] text-xs text-[#242824] leading-relaxed">
+          {result.explanation}
         </div>
-      </section>
-
-      {/* 2-Column Grid: Header Metadata & Authentication */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Header Metadata */}
-        <section className="soc-card rounded-xl p-6 flex flex-col gap-4">
-          <div className="flex items-center gap-2 border-b border-white/10 pb-3 mb-1">
-            <span className="material-symbols-outlined text-[#4cd7f6]">data_object</span>
-            <h2 className="font-mono text-sm font-bold text-white uppercase tracking-wide">Header Metadata</h2>
-          </div>
-          <div className="flex flex-col gap-3 text-xs font-mono">
-            <div className="grid grid-cols-[90px_1fr] gap-2">
-              <span className="text-slate-400 text-right">From:</span>
-              <span className="text-slate-200 break-all">{result.email.sender || 'Unknown'}</span>
-            </div>
-            <div className="grid grid-cols-[90px_1fr] gap-2">
-              <span className="text-slate-400 text-right">To:</span>
-              <span className="text-slate-200 break-all">{result.email.recipient || 'Unknown'}</span>
-            </div>
-            <div className="grid grid-cols-[90px_1fr] gap-2">
-              <span className="text-slate-400 text-right">Subject:</span>
-              <span className="text-white bg-slate-800 px-2 py-0.5 rounded font-semibold w-fit">
-                {result.email.subject || '(No Subject)'}
-              </span>
-            </div>
-            <div className="grid grid-cols-[90px_1fr] gap-2">
-              <span className="text-slate-400 text-right">Reply-To:</span>
-              <span className="text-slate-300 break-all">{result.email.reply_to || 'None'}</span>
-            </div>
-            <div className="grid grid-cols-[90px_1fr] gap-2">
-              <span className="text-slate-400 text-right">Return-Path:</span>
-              <span className="text-slate-300 break-all">{result.email.return_path || 'None'}</span>
-            </div>
-          </div>
-        </section>
-
-        {/* Authentication Alignment */}
-        <section className="soc-card rounded-xl p-6 flex flex-col gap-4">
-          <div className="flex items-center gap-2 border-b border-white/10 pb-3 mb-1">
-            <span className="material-symbols-outlined text-[#4cd7f6]">verified_user</span>
-            <h2 className="font-mono text-sm font-bold text-white uppercase tracking-wide">Authentication Alignment</h2>
-          </div>
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between p-3 bg-slate-950/60 rounded-lg border border-white/5">
-              <div>
-                <span className="font-mono text-xs font-bold text-white block">SPF Verification</span>
-                <span className="text-[11px] text-slate-400 block">{result.authentication.spf.details}</span>
-              </div>
-              {getAuthBadge(result.authentication.spf.status)}
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-slate-950/60 rounded-lg border border-white/5">
-              <div>
-                <span className="font-mono text-xs font-bold text-white block">DKIM Signature</span>
-                <span className="text-[11px] text-slate-400 block">{result.authentication.dkim.details}</span>
-              </div>
-              {getAuthBadge(result.authentication.dkim.status)}
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-slate-950/60 rounded-lg border border-white/5">
-              <div>
-                <span className="font-mono text-xs font-bold text-white block">
-                  DMARC Policy ({result.authentication.dmarc.policy ? result.authentication.dmarc.policy.toUpperCase() : 'UNSPECIFIED'})
-                </span>
-                <span className="text-[11px] text-slate-400 block">{result.authentication.dmarc.details}</span>
-              </div>
-              {getAuthBadge(result.authentication.dmarc.status)}
-            </div>
-          </div>
-        </section>
       </div>
 
-      {/* Triggered Risk Indicators */}
-      <section className="soc-card rounded-xl p-6 flex flex-col gap-4">
-        <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-1">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#4cd7f6]">warning</span>
-            <h2 className="font-mono text-sm font-bold text-white uppercase tracking-wide">Triggered Risk Indicators</h2>
+      {/* Two-Column Grid: Header Details & Authentication Alignment */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Email Header Details */}
+        <div className="pg-panel p-5 space-y-3">
+          <h2 className="text-sm font-semibold text-[#242824] pb-2 border-b border-[#E3E5DF]">
+            Email Header Details
+          </h2>
+          <div className="text-xs space-y-2.5 font-mono">
+            <div className="grid grid-cols-[80px_1fr] gap-2">
+              <span className="text-[#737873]">From:</span>
+              <span className="text-[#242824] break-all">{result.email.sender || 'Unknown'}</span>
+            </div>
+            <div className="grid grid-cols-[80px_1fr] gap-2">
+              <span className="text-[#737873]">To:</span>
+              <span className="text-[#242824] break-all">{result.email.recipient || 'Unknown'}</span>
+            </div>
+            <div className="grid grid-cols-[80px_1fr] gap-2">
+              <span className="text-[#737873]">Subject:</span>
+              <span className="text-[#242824] font-sans font-medium">{result.email.subject || '(None)'}</span>
+            </div>
+            <div className="grid grid-cols-[80px_1fr] gap-2">
+              <span className="text-[#737873]">Reply-To:</span>
+              <span className="text-[#242824] break-all">{result.email.reply_to || 'None specified'}</span>
+            </div>
+            <div className="grid grid-cols-[80px_1fr] gap-2">
+              <span className="text-[#737873]">Return-Path:</span>
+              <span className="text-[#242824] break-all">{result.email.return_path || 'None specified'}</span>
+            </div>
           </div>
-          <span className="font-mono text-xs text-slate-400">{result.indicators.length} rules triggered</span>
+        </div>
+
+        {/* Authentication Alignment */}
+        <div className="pg-panel p-5 space-y-3">
+          <h2 className="text-sm font-semibold text-[#242824] pb-2 border-b border-[#E3E5DF]">
+            Authentication Results
+          </h2>
+          <div className="space-y-3 text-xs">
+            {/* SPF Check */}
+            <div className="p-2.5 rounded bg-[#F7F7F4] border border-[#E3E5DF] flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="font-semibold text-[#242824]">SPF (Sender Policy Framework)</div>
+                <div className="text-[#737873] mt-0.5 font-mono text-[11px] break-all">
+                  {result.authentication.spf.details}
+                </div>
+              </div>
+              <div className="shrink-0">
+                {getAuthStatusDisplay(result.authentication.spf.status)}
+              </div>
+            </div>
+
+            {/* DKIM Check */}
+            <div className="p-2.5 rounded bg-[#F7F7F4] border border-[#E3E5DF] flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="font-semibold text-[#242824]">DKIM (DomainKeys Identified Mail)</div>
+                <div className="text-[#737873] mt-0.5 font-mono text-[11px] break-all">
+                  {result.authentication.dkim.details}
+                </div>
+              </div>
+              <div className="shrink-0">
+                {getAuthStatusDisplay(result.authentication.dkim.status)}
+              </div>
+            </div>
+
+            {/* DMARC Check */}
+            <div className="p-2.5 rounded bg-[#F7F7F4] border border-[#E3E5DF] flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="font-semibold text-[#242824]">
+                  DMARC Policy {result.authentication.dmarc.policy ? `(${result.authentication.dmarc.policy.toUpperCase()})` : ''}
+                </div>
+                <div className="text-[#737873] mt-0.5 font-mono text-[11px] break-all">
+                  {result.authentication.dmarc.details}
+                </div>
+              </div>
+              <div className="shrink-0">
+                {getAuthStatusDisplay(result.authentication.dmarc.status)}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Triggered Risk Indicators Table */}
+      <div className="pg-panel overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-[#E3E5DF] flex items-center justify-between bg-white">
+          <h2 className="text-sm font-semibold text-[#242824]">
+            Triggered Risk Indicators
+          </h2>
+          <span className="text-xs font-mono text-[#737873]">
+            {result.indicators.length} {result.indicators.length === 1 ? 'rule triggered' : 'rules triggered'}
+          </span>
         </div>
 
         {result.indicators.length === 0 ? (
-          <div className="p-4 bg-emerald-950/40 border border-emerald-800 rounded-lg text-emerald-400 text-xs font-mono text-center">
-            No risk indicators were triggered for this message.
+          <div className="p-6 text-center text-xs text-[#1E5A2A] bg-[#EBF5ED]/40">
+            No suspicious indicators or security violations were detected in this message.
           </div>
         ) : (
-          <div className="flex flex-col gap-2">
-            {result.indicators.map((ind: RiskIndicatorItem, idx: number) => (
-              <div key={idx} className="flex flex-col md:flex-row md:items-center justify-between p-3 bg-slate-950/80 border border-white/5 rounded-lg gap-2">
-                <div className="flex items-center gap-3">
-                  <span className="font-mono text-xs font-bold text-[#4cd7f6]">[{ind.rule_id}]</span>
-                  <span className="text-xs text-slate-200">{ind.description}</span>
-                </div>
-                <div className="flex items-center gap-3 self-end md:self-auto">
-                  <span className={`px-2 py-0.5 rounded font-mono text-[10px] uppercase font-bold ${
-                    ind.severity === 'HIGH' || ind.severity === 'CRITICAL' ? 'bg-rose-950 text-rose-400 border border-rose-800' :
-                    ind.severity === 'MEDIUM' ? 'bg-amber-950 text-amber-400 border border-amber-800' : 'bg-slate-800 text-slate-300'
-                  }`}>
-                    {ind.severity}
-                  </span>
-                  <span className="font-mono text-xs font-bold text-rose-400">+{ind.score_impact} pts</span>
-                </div>
-              </div>
-            ))}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-[#F0F2ED] text-[#737873] font-medium border-b border-[#E3E5DF]">
+                  <th className="py-2.5 px-4 font-medium w-24">Rule ID</th>
+                  <th className="py-2.5 px-4 font-medium">Finding Description</th>
+                  <th className="py-2.5 px-4 font-medium w-28 text-center">Severity</th>
+                  <th className="py-2.5 px-4 font-medium w-24 text-right">Impact</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#E3E5DF] text-[#242824]">
+                {result.indicators.map((ind: RiskIndicatorItem, idx: number) => (
+                  <tr key={idx} className="hover:bg-[#F7F7F4] transition-colors">
+                    <td className="py-3 px-4 font-mono font-semibold text-[#456B55]">
+                      {ind.rule_id}
+                    </td>
+                    <td className="py-3 px-4 leading-relaxed">
+                      {ind.description}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <span className={`status-pill ${
+                        ind.severity === 'CRITICAL' ? 'status-critical' :
+                        ind.severity === 'HIGH' ? 'status-high' :
+                        ind.severity === 'MEDIUM' ? 'status-medium' : 'status-low'
+                      }`}>
+                        {ind.severity}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-right font-mono font-semibold text-[#991B1B]">
+                      +{ind.score_impact} pts
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
-      </section>
+      </div>
 
-      {/* Extracted URLs Table */}
-      <section className="soc-card rounded-xl p-6 flex flex-col gap-4 overflow-x-auto">
-        <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-1 min-w-[600px]">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#4cd7f6]">link</span>
-            <h2 className="font-mono text-sm font-bold text-white uppercase tracking-wide">Extracted URLs &amp; Security Checks</h2>
-          </div>
-          <span className="font-mono text-xs text-slate-400">{result.urls.length} links</span>
+      {/* Extracted URLs Findings Table */}
+      <div className="pg-panel overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-[#E3E5DF] flex items-center justify-between bg-white">
+          <h2 className="text-sm font-semibold text-[#242824]">
+            Extracted Hyperlinks &amp; Security Checks
+          </h2>
+          <span className="text-xs font-mono text-[#737873]">
+            {result.urls.length} {result.urls.length === 1 ? 'URL found' : 'URLs found'}
+          </span>
         </div>
 
         {result.urls.length === 0 ? (
-          <p className="text-xs text-slate-500 italic py-3 text-center font-mono">No hyperlinks extracted from body.</p>
+          <div className="p-6 text-center text-xs text-[#737873]">
+            No hyperlinks were found in the plain text or HTML body of this email.
+          </div>
         ) : (
-          <table className="w-full text-left border-collapse min-w-[600px]">
-            <thead>
-              <tr className="border-b border-white/10 font-mono text-[11px] text-slate-400 uppercase">
-                <th className="py-2.5 px-3">Destination URL</th>
-                <th className="py-2.5 px-3">Domain</th>
-                <th className="py-2.5 px-3">Threat Flags</th>
-                <th className="py-2.5 px-3 text-right">Impact</th>
-              </tr>
-            </thead>
-            <tbody className="font-mono text-xs">
-              {result.urls.map((u: URLAnalysisItem, idx: number) => (
-                <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                  <td className="py-3 px-3 text-slate-200 max-w-[280px] truncate">{u.url}</td>
-                  <td className="py-3 px-3 text-slate-400">{u.domain || u.hostname}</td>
-                  <td className="py-3 px-3">
-                    <div className="flex flex-wrap gap-1">
-                      {u.is_ip_host && <span className="bg-rose-950 text-rose-400 px-1.5 py-0.5 rounded text-[10px] border border-rose-800">URL-001 IP Host</span>}
-                      {u.display_mismatch && <span className="bg-rose-950 text-rose-400 px-1.5 py-0.5 rounded text-[10px] border border-rose-800">URL-002 Deceptive Link</span>}
-                      {u.is_shortener && <span className="bg-amber-950 text-amber-400 px-1.5 py-0.5 rounded text-[10px] border border-amber-800">URL-003 Shortener</span>}
-                      {!u.is_ip_host && !u.display_mismatch && !u.is_shortener && <span className="text-slate-500 text-[10px]">Clean</span>}
-                    </div>
-                  </td>
-                  <td className="py-3 px-3 text-right text-rose-400 font-bold">
-                    {u.risk_score_contribution > 0 ? `+${u.risk_score_contribution}` : '0'}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-[#F0F2ED] text-[#737873] font-medium border-b border-[#E3E5DF]">
+                  <th className="py-2.5 px-4 font-medium max-w-[280px]">Destination URL</th>
+                  <th className="py-2.5 px-4 font-medium">Host / Domain</th>
+                  <th className="py-2.5 px-4 font-medium">Threat Indicators</th>
+                  <th className="py-2.5 px-4 font-medium text-right w-20">Impact</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-[#E3E5DF] text-[#242824]">
+                {result.urls.map((u: URLAnalysisItem, idx: number) => {
+                  const hasThreats = u.is_ip_host || u.display_mismatch || u.is_shortener;
+                  return (
+                    <tr key={idx} className="hover:bg-[#F7F7F4] transition-colors">
+                      <td className="py-3 px-4 font-mono text-[#242824] break-all max-w-[320px]">
+                        <div className="truncate" title={u.url}>{u.url}</div>
+                      </td>
+                      <td className="py-3 px-4 font-mono text-[#737873]">
+                        {u.domain || u.hostname || '—'}
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex flex-wrap gap-1.5">
+                          {u.is_ip_host && (
+                            <span className="status-pill status-high">URL-001 IP Host</span>
+                          )}
+                          {u.display_mismatch && (
+                            <span className="status-pill status-high">URL-002 Deceptive Text</span>
+                          )}
+                          {u.is_shortener && (
+                            <span className="status-pill status-medium">URL-003 Shortener</span>
+                          )}
+                          {!hasThreats && (
+                            <span className="status-pill bg-[#F0F2ED] text-[#737873] border border-[#E3E5DF]">Clean</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono font-semibold">
+                        {u.risk_score_contribution > 0 ? (
+                          <span className="text-[#991B1B]">+{u.risk_score_contribution}</span>
+                        ) : (
+                          <span className="text-[#737873]">0</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
-      </section>
+      </div>
 
-      {/* Recommended Security Actions */}
-      <section className="soc-card rounded-xl p-6 flex flex-col gap-3">
-        <div className="flex items-center gap-2 border-b border-white/10 pb-3">
-          <span className="material-symbols-outlined text-[#4cd7f6]">task_alt</span>
-          <h2 className="font-mono text-sm font-bold text-white uppercase tracking-wide">Recommended Actions</h2>
-        </div>
-        <ul className="flex flex-col gap-2 text-xs text-slate-300">
+      {/* Recommended Actions */}
+      <div className="pg-panel p-5 space-y-3">
+        <h2 className="text-sm font-semibold text-[#242824] pb-2 border-b border-[#E3E5DF]">
+          Recommended Defensive Actions
+        </h2>
+        <ul className="space-y-2 text-xs text-[#242824]">
           {result.recommendations.map((rec: string, idx: number) => (
-            <li key={idx} className="flex items-start gap-2">
-              <span className="text-[#4cd7f6] font-bold">•</span>
+            <li key={idx} className="flex items-start gap-2.5 leading-relaxed">
+              <span className="text-[#456B55] font-semibold font-mono mt-0.5">•</span>
               <span>{rec}</span>
             </li>
           ))}
         </ul>
-      </section>
+      </div>
     </div>
   );
 };
